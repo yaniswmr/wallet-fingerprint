@@ -1,0 +1,178 @@
+{
+  "phase1_top20": [
+    {
+      "n_blocks": 10,
+      "p_low": 5,
+      "p_med": 75,
+      "p_high": 80,
+      "mean_mape": 25.792,
+      "std_mape": 8.662
+    },
+    {
+      "n_blocks": 10,
+      "p_low": 5,
+      "p_med": 70,
+      "p_high": 80,
+      "mean_mape": 29.35,
+      "std_mape": 8.975
+    },
+    {
+      "n_blocks": 5,
+      "p_low": 5,
+      "p_med": 75,
+      "p_high": 80,
+      "mean_mape": 32.638,
+      "std_mape": 2.771
+    },
+    {
+      "n_blocks": 10,
+      "p_low": 5,
+      "p_med": 70,
+      "p_high": 75,
+      "mean_mape": 32.777,
+      "std_mape": 8.616
+    },
+    {
+      "n_blocks": 10,
+      "p_low": 5,
+      "p_med": 60,
+      "p_high": 80,
+      "mean_mape": 35.922,
+      "std_mape": 8.654
+    },
+    {
+      "n_blocks": 5,
+      "p_low": 5,
+      "p_med": 70,
+      "p_high": 80,
+      "mean_mape": 36.506,
+      "std_mape": 3.051
+    },
+    {
+      "n_blocks": 5,
+      "p_low": 5,
+      "p_med": 80,
+      "p_high": 90,
+      "mean_mape": 38.251,
+      "std_mape": 3.751
+    },
+    {
+      "n_blocks": 5,
+      "p_low": 5,
+      "p_med": 70,
+      "p_high": 75,
+      "mean_mape": 38.867,
+      "std_mape": 3.07
+    },
+    {
+      "n_blocks": 10,
+      "p_low": 5,
+      "p_med": 60,
+      "p_high": 75,
+      "mean_mape": 39.35,
+      "std_mape": 8.297
+    },
+    {
+      "n_blocks": 5,
+      "p_low": 5,
+      "p_med": 75,
+      "p_high": 90,
+      "mean_mape": 40.613,
+      "std_mape": 3.556
+    },
+    {
+      "n_blocks": 10,
+      "p_low": 5,
+      "p_med": 50,
+      "p_high": 80,
+      "mean_mape": 41.044,
+      "std_mape": 8.602
+    },
+    {
+      "n_blocks": 5,
+      "p_low": 5,
+      "p_med": 60,
+      "p_high": 80,
+      "mean_mape": 42.402,
+      "std_mape": 3.049
+    },
+    {
+      "n_blocks": 10,
+      "p_low": 5,
+      "p_med": 60,
+      "p_high": 70,
+      "mean_mape": 42.908,
+      "std_mape": 8.608
+    },
+    {
+      "n_blocks": 10,
+      "p_low": 5,
+      "p_med": 50,
+      "p_high": 75,
+      "mean_mape": 44.472,
+      "std_mape": 8.248
+    },
+    {
+      "n_blocks": 5,
+      "p_low": 5,
+      "p_med": 70,
+      "p_high": 90,
+      "mean_mape": 44.481,
+      "std_mape": 3.882
+    },
+    {
+      "n_blocks": 5,
+      "p_low": 5,
+      "p_med": 60,
+      "p_high": 75,
+      "mean_mape": 44.764,
+      "std_mape": 3.063
+    },
+    {
+      "n_blocks": 10,
+      "p_low": 5,
+      "p_med": 80,
+      "p_high": 90,
+      "mean_mape": 44.915,
+      "std_mape": 3.216
+    },
+    {
+      "n_blocks": 10,
+      "p_low": 5,
+      "p_med": 40,
+      "p_high": 80,
+      "mean_mape": 45.528,
+      "std_mape": 8.869
+    },
+    {
+      "n_blocks": 5,
+      "p_low": 5,
+      "p_med": 50,
+      "p_high": 80,
+      "mean_mape": 47.112,
+      "std_mape": 3.515
+    },
+    {
+      "n_blocks": 10,
+      "p_low": 5,
+      "p_med": 50,
+      "p_high": 70,
+      "mean_mape": 48.029,
+      "std_mape": 8.557
+    }
+  ],
+  "best_priority": {
+    "n_blocks": 10,
+    "p_low": 5,
+    "p_med": 75,
+    "p_high": 80,
+    "mean_mape": 25.792,
+    "std_mape": 8.662
+  },
+  "best_multiplier": {
+    "m_low": 0.9955,
+    "m_med": 1.4236,
+    "m_high": 1.4236,
+    "mape": 0.0
+  }
+}

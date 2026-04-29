@@ -1,0 +1,230 @@
+{
+  "phase1_top20": [
+    {
+      "n_blocks": 5,
+      "p_low": 10,
+      "p_med": 75,
+      "p_high": 80,
+      "agg_method": "median",
+      "mean_mape": 7.3,
+      "std_mape": 12.883
+    },
+    {
+      "n_blocks": 5,
+      "p_low": 10,
+      "p_med": 70,
+      "p_high": 80,
+      "agg_method": "median",
+      "mean_mape": 9.988,
+      "std_mape": 13.653
+    },
+    {
+      "n_blocks": 5,
+      "p_low": 10,
+      "p_med": 70,
+      "p_high": 75,
+      "agg_method": "median",
+      "mean_mape": 11.762,
+      "std_mape": 14.724
+    },
+    {
+      "n_blocks": 5,
+      "p_low": 10,
+      "p_med": 60,
+      "p_high": 80,
+      "agg_method": "median",
+      "mean_mape": 19.4,
+      "std_mape": 11.773
+    },
+    {
+      "n_blocks": 5,
+      "p_low": 10,
+      "p_med": 60,
+      "p_high": 75,
+      "agg_method": "median",
+      "mean_mape": 21.175,
+      "std_mape": 12.77
+    },
+    {
+      "n_blocks": 5,
+      "p_low": 10,
+      "p_med": 50,
+      "p_high": 80,
+      "agg_method": "median",
+      "mean_mape": 22.647,
+      "std_mape": 11.679
+    },
+    {
+      "n_blocks": 5,
+      "p_low": 10,
+      "p_med": 60,
+      "p_high": 70,
+      "agg_method": "median",
+      "mean_mape": 23.857,
+      "std_mape": 13.54
+    },
+    {
+      "n_blocks": 5,
+      "p_low": 10,
+      "p_med": 50,
+      "p_high": 75,
+      "agg_method": "median",
+      "mean_mape": 24.421,
+      "std_mape": 12.669
+    },
+    {
+      "n_blocks": 5,
+      "p_low": 10,
+      "p_med": 80,
+      "p_high": 90,
+      "agg_method": "median",
+      "mean_mape": 24.59,
+      "std_mape": 10.441
+    },
+    {
+      "n_blocks": 15,
+      "p_low": 5,
+      "p_med": 75,
+      "p_high": 80,
+      "agg_method": "trimmed_mean",
+      "mean_mape": 25.509,
+      "std_mape": 8.914
+    },
+    {
+      "n_blocks": 5,
+      "p_low": 10,
+      "p_med": 75,
+      "p_high": 90,
+      "agg_method": "median",
+      "mean_mape": 25.668,
+      "std_mape": 10.444
+    },
+    {
+      "n_blocks": 30,
+      "p_low": 5,
+      "p_med": 75,
+      "p_high": 80,
+      "agg_method": "median",
+      "mean_mape": 26.407,
+      "std_mape": 10.544
+    },
+    {
+      "n_blocks": 10,
+      "p_low": 5,
+      "p_med": 75,
+      "p_high": 80,
+      "agg_method": "median",
+      "mean_mape": 26.58,
+      "std_mape": 10.545
+    },
+    {
+      "n_blocks": 15,
+      "p_low": 5,
+      "p_med": 75,
+      "p_high": 80,
+      "agg_method": "median",
+      "mean_mape": 26.594,
+      "std_mape": 10.509
+    },
+    {
+      "n_blocks": 20,
+      "p_low": 5,
+      "p_med": 75,
+      "p_high": 80,
+      "agg_method": "median",
+      "mean_mape": 26.704,
+      "std_mape": 10.472
+    },
+    {
+      "n_blocks": 5,
+      "p_low": 10,
+      "p_med": 50,
+      "p_high": 70,
+      "agg_method": "median",
+      "mean_mape": 27.103,
+      "std_mape": 13.408
+    },
+    {
+      "n_blocks": 5,
+      "p_low": 5,
+      "p_med": 75,
+      "p_high": 80,
+      "agg_method": "median",
+      "mean_mape": 27.479,
+      "std_mape": 9.246
+    },
+    {
+      "n_blocks": 10,
+      "p_low": 5,
+      "p_med": 75,
+      "p_high": 80,
+      "agg_method": "trimmed_mean",
+      "mean_mape": 27.481,
+      "std_mape": 10.787
+    },
+    {
+      "n_blocks": 5,
+      "p_low": 5,
+      "p_med": 75,
+      "p_high": 80,
+      "agg_method": "trimmed_mean",
+      "mean_mape": 28.074,
+      "std_mape": 9.58
+    },
+    {
+      "n_blocks": 20,
+      "p_low": 5,
+      "p_med": 75,
+      "p_high": 80,
+      "agg_method": "trimmed_mean",
+      "mean_mape": 28.125,
+      "std_mape": 9.89
+    }
+  ],
+  "best_priority": {
+    "n_blocks": 5,
+    "p_low": 10,
+    "p_med": 75,
+    "p_high": 80,
+    "agg_method": "median",
+    "mean_mape": 7.3,
+    "std_mape": 12.883
+  },
+  "phase2_results": [
+    {
+      "bf_method": "current",
+      "m_low": 1.0,
+      "m_med": 1.43,
+      "m_high": 1.43,
+      "mape": 0.355
+    },
+    {
+      "bf_method": "mean5",
+      "m_low": 1.0,
+      "m_med": 1.4196,
+      "m_high": 1.4196,
+      "mape": 1.144
+    },
+    {
+      "bf_method": "ewma",
+      "m_low": 1.0,
+      "m_med": 1.3901,
+      "m_high": 1.3901,
+      "mape": 1.736
+    },
+    {
+      "bf_method": "next_block",
+      "m_low": 1.0,
+      "m_med": 1.4523,
+      "m_high": 1.4246,
+      "mape": 2.368
+    }
+  ],
+  "best_multiplier": {
+    "bf_method": "current",
+    "m_low": 1.0,
+    "m_med": 1.43,
+    "m_high": 1.43,
+    "mape": 0.355
+  }
+}
