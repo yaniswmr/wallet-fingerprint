@@ -35,6 +35,7 @@ from web3 import Web3
 
 GREEN  = "\033[92m"
 YELLOW = "\033[93m"
+BLUE   = "\033[94m"
 RESET  = "\033[0m"
 
 # ── Gas detection thresholds ──────────────────────────────────────────────────
@@ -44,8 +45,8 @@ PRIORITY_MED_HIGH_TOL = 0.01    # Gwei
 PRIORITY_LOW_TOL      = 0.00005 # Gwei
 
 METAMASK_GAS_SIGNATURES = [
-    (1.43,  2.0,    "medium/high  [factor=1.43, priority=2 Gwei]",       FACTOR_TOLERANCE, PRIORITY_MED_HIGH_TOL),
-    (1.00,  0.0001, "low          [factor=1.00, priority=0.0001 Gwei]",  FACTOR_TOLERANCE, PRIORITY_LOW_TOL),
+    (1.43,  2.0,    f"{BLUE}medium/high  [factor=1.43, priority=2 Gwei]{RESET}",       FACTOR_TOLERANCE, PRIORITY_MED_HIGH_TOL),
+    (1.00,  0.0001, "low          [factor=1.00, priority=0.0001 Gwei]",                FACTOR_TOLERANCE, PRIORITY_LOW_TOL),
 ]
 
 # ── EIP-7702 delegation detection ─────────────────────────────────────────────
@@ -118,12 +119,11 @@ def _detect_7702(w3: Web3, address: str, block_number: int) -> tuple[bool, str |
 
 # ── Block analysis ────────────────────────────────────────────────────────────
 
-def analyze_block(block, w3: Web3) -> list[dict]:
-    base_fee = block.get("baseFeePerGas")
-    if base_fee is None or base_fee == 0:
+def analyze_block(block, w3: Web3, parent_base_fee: int) -> list[dict]:
+    if parent_base_fee is None or parent_base_fee == 0:
         return []
 
-    base_fee_gwei = base_fee / 1e9
+    base_fee_gwei = parent_base_fee / 1e9
     block_number  = block["number"]
     matches = []
 
@@ -192,8 +192,12 @@ def print_match(block_num: int, m: dict) -> None:
         print(f"  7702 delegate   : {m['delegated_to']}  (not MetaMask)")
     print(f"  gasLimit        = {m['gas_limit']}")
     if m["estimated_gas"] is not None:
+        glf = m["gas_limit_factor"]
+        glf_str = f"{glf:.6f}"
+        if abs(glf - 1.5) <= 0.05:
+            glf_str = f"{YELLOW}{glf:.6f}{RESET}"
         print(f"  estimatedGas   = {m['estimated_gas']}  (simulated at block {block_num - 1})")
-        print(f"  gasLimit factor = {m['gas_limit_factor']:.6f}  ({m['gas_limit']} / {m['estimated_gas']})")
+        print(f"  gasLimit factor = {glf_str}  ({m['gas_limit']} / {m['estimated_gas']})")
     else:
         print(f"  estimatedGas   = N/A  (simulation failed)")
 
@@ -223,6 +227,8 @@ def main() -> None:
     total_matches = 0
     current = args.start if args.start is not None else w3.eth.block_number
 
+    pending_block = None  # bloc en attente d'analyse (on attend son parent pour avoir le bon baseFee)
+
     while True:
         try:
             block = w3.eth.get_block(current, full_transactions=True)
@@ -231,23 +237,27 @@ def main() -> None:
             time.sleep(1)
             continue
 
-        matches      = analyze_block(block, w3)
-        total_blocks += 1
-        total_matches += len(matches)
+        if pending_block is not None:
+            # block est le parent de pending_block : on a maintenant le bon baseFee
+            matches       = analyze_block(pending_block, w3, parent_base_fee=block.get("baseFeePerGas"))
+            total_blocks  += 1
+            total_matches += len(matches)
 
-        tx_count = len(block["transactions"])
-        eip1559  = sum(1 for tx in block["transactions"] if tx.get("maxFeePerGas") is not None)
-        print(
-            f"[block {current}] txs={tx_count} eip1559={eip1559} matches={len(matches)}"
-            f"  (total: {total_blocks} blocks, {total_matches} MetaMask txs)",
-            flush=True,
-        )
+            tx_count = len(pending_block["transactions"])
+            eip1559  = sum(1 for tx in pending_block["transactions"] if tx.get("maxFeePerGas") is not None)
+            print(
+                f"[block {pending_block['number']}] txs={tx_count} eip1559={eip1559} matches={len(matches)}"
+                f"  (total: {total_blocks} blocks, {total_matches} MetaMask txs)",
+                flush=True,
+            )
+            for m in matches:
+                print_match(pending_block["number"], m)
 
-        for m in matches:
-            print_match(current, m)
+        pending_block = block
 
         if current == 0:
             current = w3.eth.block_number
+            pending_block = None
             print(f"\n── Reached genesis, restarting from block {current} ──\n")
         else:
             current -= 1
