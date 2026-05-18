@@ -17,19 +17,17 @@ Detection signal (EIP-1559 transactions only):
     fast   = mean(p90 tips sur 100 blocs)
 
 Display :
-  ✅  GREEN  — factor ≈ 1.27 ET priority matche un tier Ledger
-  ~   BLUE   — factor ≈ 1.27 seulement (feeHistory non dispo ou pas de match)
-
-Runs indefinitely: scans backwards from latest block, restarts from new latest
-when it reaches block 0.
+  ✅  GREEN  — factor ≈ 1.27 ET priority matche un tier Ledger  → inséré en DB
+  ~   BLUE   — factor ≈ 1.27 seulement
 
 Usage:
   python find_ledger.py --rpc <ETH_RPC_URL>
-  python find_ledger.py --rpc <ETH_RPC_URL> --start 22000000
+  python find_ledger.py --rpc <ETH_RPC_URL> --start 22000000 --db ledger.db
 """
 
 import argparse
 import os
+import sqlite3
 import sys
 import time
 
@@ -45,34 +43,66 @@ RESET  = "\033[0m"
 # ── Thresholds ────────────────────────────────────────────────────────────────
 
 FACTOR_LEDGER    = 1.27
-FACTOR_TOLERANCE = 0.001  # ±0.001 autour de 1.27
+FACTOR_TOLERANCE = 0.001
 
-# ── feeHistory cache (une entrée par numéro de bloc) ─────────────────────────
+# ── feeHistory cache ──────────────────────────────────────────────────────────
 
-# block_number → (slow_gwei, medium_gwei, fast_gwei) | None
 _fee_history_cache: dict[int, tuple[float, float, float] | None] = {}
 
 
+# ── DB setup ──────────────────────────────────────────────────────────────────
+
+CREATE_TABLE = """
+CREATE TABLE IF NOT EXISTS transactions (
+    hash              TEXT PRIMARY KEY,
+    block             INTEGER NOT NULL,
+    from_addr         TEXT,
+    tier              TEXT,
+    max_fee_gwei      REAL,
+    max_priority_gwei REAL,
+    base_fee_gwei     REAL,
+    fee_factor        REAL,
+    ledger_slow       REAL,
+    ledger_medium     REAL,
+    ledger_fast       REAL,
+    gas_limit         INTEGER,
+    estimated_gas     INTEGER,
+    gas_limit_factor  REAL
+)
+"""
+
+INSERT_TX = """
+INSERT OR IGNORE INTO transactions
+    (hash, block, from_addr, tier,
+     max_fee_gwei, max_priority_gwei, base_fee_gwei, fee_factor,
+     ledger_slow, ledger_medium, ledger_fast,
+     gas_limit, estimated_gas, gas_limit_factor)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+"""
+
+
+def init_db(db_path: str) -> sqlite3.Connection:
+    conn = sqlite3.connect(db_path)
+    conn.execute(CREATE_TABLE)
+    conn.commit()
+    return conn
+
+
+# ── feeHistory ────────────────────────────────────────────────────────────────
+
 def _get_ledger_priorities(w3: Web3, block_number: int) -> tuple[float, float, float] | None:
-    """
-    Calcule les trois priority fees Ledger pour un bloc donné.
-    Appelle eth_feeHistory(100, block_number-1, [25, 50, 90]).
-    Résultats mis en cache par numéro de bloc.
-    """
     if block_number in _fee_history_cache:
         return _fee_history_cache[block_number]
-
     try:
         fh = w3.eth.fee_history(100, block_number - 1, [25, 50, 90])
         rewards = [r for r in fh["reward"] if r]
-        n = len(rewards)
+        n      = len(rewards)
         slow   = sum(r[0] for r in rewards) / n / 1e9
         medium = sum(r[1] for r in rewards) / n / 1e9
         fast   = sum(r[2] for r in rewards) / n / 1e9
         result: tuple[float, float, float] | None = (slow, medium, fast)
     except Exception:
         result = None
-
     _fee_history_cache[block_number] = result
     return result
 
@@ -115,7 +145,6 @@ def _estimate_gas_limit_factor(
 # ── Block analysis ────────────────────────────────────────────────────────────
 
 def analyze_block(block, w3: Web3) -> list[dict]:
-    # Ledger utilise le baseFee du bloc lui-même (nextBaseFee au moment de la soumission)
     base_fee = block.get("baseFeePerGas")
     if base_fee is None or base_fee == 0:
         return []
@@ -123,7 +152,7 @@ def analyze_block(block, w3: Web3) -> list[dict]:
     base_fee_gwei = base_fee / 1e9
     block_number  = block["number"]
     matches       = []
-    priorities    = None   # chargé une seule fois si nécessaire
+    priorities    = None
 
     for tx in block["transactions"]:
         if tx.get("maxFeePerGas") is None or tx.get("maxPriorityFeePerGas") is None:
@@ -136,7 +165,6 @@ def analyze_block(block, w3: Web3) -> list[dict]:
         if abs(factor - FACTOR_LEDGER) > FACTOR_TOLERANCE:
             continue
 
-        # Charge feeHistory une seule fois par bloc
         if priorities is None:
             priorities = _get_ledger_priorities(w3, block_number)
 
@@ -179,7 +207,6 @@ def print_match(block_num: int, m: dict) -> None:
 
     ff     = m["fee_factor"]
     ff_str = f"{GREEN}{ff:.6f}{RESET}" if abs(ff - FACTOR_LEDGER) <= FACTOR_TOLERANCE else f"{ff:.6f}"
-
     prio_str = f"{GREEN}{m['maxPriority']:.6f}{RESET}" if confirmed else f"{m['maxPriority']:.6f}"
 
     print(f"\n[block {block_num}] {header}")
@@ -195,7 +222,6 @@ def print_match(block_num: int, m: dict) -> None:
         def _tier_label(name: str, val: float) -> str:
             tag = f"  {GREEN}◀ MATCH{RESET}" if m["tier"] == name else ""
             return f"{val:.6f} Gwei{tag}"
-
         print(f"  ledger slow     = {_tier_label('slow',   m['ledger_slow'])}")
         print(f"  ledger medium   = {_tier_label('medium', m['ledger_medium'])}")
         print(f"  ledger fast     = {_tier_label('fast',   m['ledger_fast'])}")
@@ -221,21 +247,31 @@ def main() -> None:
         epilog=__doc__,
     )
     p.add_argument("--rpc",   default=os.environ.get("ETH_RPC_URL"), required=not os.environ.get("ETH_RPC_URL"), help="Ethereum JSON-RPC endpoint")
-    p.add_argument("--start", type=int, default=None, help="Start block (default: latest)")
-    p.add_argument("--delay", type=float, default=0.05, help="Seconds between block fetches (default 0.05)")
+    p.add_argument("--start", type=int, default=None, help="Premier bloc (default: latest)")
+    p.add_argument("--end",   type=int, default=None, help="Dernier bloc (default: scan infini vers 0)")
+    p.add_argument("--db",    default="ledger.db", help="SQLite database file (default: ledger.db)")
+    p.add_argument("--delay", type=float, default=0.0, help="Secondes entre chaque bloc (default: 0)")
     args = p.parse_args()
 
     w3 = Web3(Web3.HTTPProvider(args.rpc))
     if not w3.is_connected():
         sys.exit("ERROR: Cannot connect to Ethereum node. Check --rpc.")
 
+    conn = init_db(args.db)
+
+    start   = args.start if args.start is not None else 0
+    end     = args.end if args.end is not None else w3.eth.block_number
+    current = start
+
     print(f"Connected. Latest block: {w3.eth.block_number}")
-    print(f"Signals: {BLUE}[GAS]{RESET} factor≈1.27  |  {GREEN}✅ factor + priority tier match{RESET}")
+    print(f"Database : {args.db}")
+    print(f"Range    : {start} → {end}")
+    print(f"Signals: {BLUE}[GAS]{RESET} factor≈1.27  |  {GREEN}✅ factor + priority tier match → saved to DB{RESET}")
     print(f"Scanning backwards. Ctrl+C to stop.\n")
 
     total_blocks  = 0
     total_matches = 0
-    current = args.start if args.start is not None else w3.eth.block_number
+    total_saved   = 0
 
     while True:
         try:
@@ -249,21 +285,33 @@ def main() -> None:
         total_blocks  += 1
         total_matches += len(matches)
 
+        confirmed = [m for m in matches if m["tier"] is not None]
+        if confirmed:
+            rows = [(
+                m["hash"], current, m["from"], m["tier"],
+                m["maxFee"], m["maxPriority"], m["baseFee"], m["fee_factor"],
+                m["ledger_slow"], m["ledger_medium"], m["ledger_fast"],
+                m["gas_limit"], m["estimated_gas"], m["gas_limit_factor"],
+            ) for m in confirmed]
+            conn.executemany(INSERT_TX, rows)
+            conn.commit()
+            total_saved += len(confirmed)
+
         tx_count = len(block["transactions"])
         eip1559  = sum(1 for tx in block["transactions"] if tx.get("maxFeePerGas") is not None)
         print(
-            f"[block {current}] txs={tx_count} eip1559={eip1559} matches={len(matches)}"
-            f"  (total: {total_blocks} blocks, {total_matches} Ledger txs)",
+            f"[block {current}] txs={tx_count} eip1559={eip1559}"
+            f" matches={len(matches)} saved={len(confirmed)}"
+            f"  (total: {total_blocks} blocks, {total_matches} pattern, {total_saved} saved)",
             flush=True,
         )
         for m in matches:
             print_match(current, m)
 
-        if current == 0:
-            current = w3.eth.block_number
-            print(f"\n── Reached genesis, restarting from block {current} ──\n")
-        else:
-            current -= 1
+        if current >= end:
+            print(f"\n── Reached end block {end}, stopping ──")
+            break
+        current += 1
 
         if args.delay > 0:
             time.sleep(args.delay)
@@ -274,3 +322,4 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print("\nStopped.")
+        sys.exit(0)
