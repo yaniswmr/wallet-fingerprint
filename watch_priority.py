@@ -24,6 +24,7 @@ Every 15s:
   - Prints top 10 combos for each tier, ranked by MAPE on valid samples only
 """
 
+import os
 import time
 import numpy as np
 from web3 import Web3
@@ -31,7 +32,7 @@ from web3 import Web3
 from src.extractor import extract_tips
 from src.fetcher import fetch_fee_history, fetch_metamask, ALL_PERCENTILES
 
-RPC_URL          = "http://192.168.1.42:8555/"
+RPC_URL          = os.environ["ETH_RPC_URL"]
 N_BLOCKS_OPTIONS = [1,2,3,4,5, 10, 15, 20, 25 , 30, 50, 100, 200 , 300]
 INTERVAL         = 15  # seconds
 TOP_N            = 10

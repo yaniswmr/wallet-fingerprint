@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
+import os
 import time
 import requests
 from web3 import Web3
 
-RPC_URL   = "http://192.168.1.42:8555/"
+RPC_URL   = os.environ["ETH_RPC_URL"]
 LEDGER_URL = "https://explorers.api.live.ledger.com/blockchain/v4/eth/gastracker/barometer?display=eip1559"
 
 GREEN = "\033[92m✓\033[0m"

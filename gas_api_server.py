@@ -22,6 +22,7 @@ Endpoints:
 
 import argparse
 import json
+import os
 import sys
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse
@@ -149,7 +150,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
-    p.add_argument("--rpc",  default="http://192.168.1.42:8555/", help="Ethereum JSON-RPC endpoint URL")
+    p.add_argument("--rpc",  default=os.environ.get("ETH_RPC_URL"), required=not os.environ.get("ETH_RPC_URL"), help="Ethereum JSON-RPC endpoint URL")
     p.add_argument("--port", type=int, default=3020, help="HTTP port to listen on (default 3020)")
     p.add_argument("--host", default="127.0.0.1", help="Host to bind to (default 127.0.0.1)")
     p.add_argument(

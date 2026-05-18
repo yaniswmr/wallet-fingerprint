@@ -22,6 +22,7 @@ Usage:
 
 import argparse
 import json
+import os
 import sys
 import time
 from collections import defaultdict
@@ -238,7 +239,7 @@ def main() -> None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
-    p.add_argument("--rpc",       default="http://192.168.1.42:8555/",  help="Ethereum JSON-RPC endpoint")
+    p.add_argument("--rpc",       default=os.environ.get("ETH_RPC_URL"), required=not os.environ.get("ETH_RPC_URL"),  help="Ethereum JSON-RPC endpoint")
     p.add_argument("--delegator", default="0x80296ff8d1ed46f8e3c7992664d13b833504c2bb", help="EIP-7702 delegator contract address to match")
     p.add_argument("--start",     type=int, default=24960000, help="First block to scan")
     p.add_argument("--end",       type=int, default=24970000,  help="Last block to scan (default: latest)")

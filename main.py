@@ -27,6 +27,7 @@ Usage:
 
 import argparse
 import json
+import os
 import sys
 
 from dataclasses import asdict
@@ -97,7 +98,7 @@ def _parse_args() -> argparse.Namespace:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
-    p.add_argument("--rpc",      required=True,  help="Ethereum JSON-RPC endpoint URL")
+    p.add_argument("--rpc",      default=os.environ.get("ETH_RPC_URL"), required=not os.environ.get("ETH_RPC_URL"),  help="Ethereum JSON-RPC endpoint URL")
     p.add_argument("--samples",  type=int,   default=5,    help="Snapshots per phase (default 5)")
     p.add_argument("--pause",    type=float, default=15.0, help="Seconds between snapshots (default 15)")
     p.add_argument("--validate", type=int,   default=10,   help="Validation checks (default 10)")

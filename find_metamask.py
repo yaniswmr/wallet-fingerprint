@@ -25,6 +25,7 @@ Usage:
 """
 
 import argparse
+import os
 import sys
 import time
 
@@ -205,7 +206,7 @@ def main() -> None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
-    p.add_argument("--rpc",   default="http://192.168.1.42:8555/", help="Ethereum JSON-RPC endpoint")
+    p.add_argument("--rpc",   default=os.environ.get("ETH_RPC_URL"), required=not os.environ.get("ETH_RPC_URL"), help="Ethereum JSON-RPC endpoint")
     p.add_argument("--start", type=int, default=None, help="Start block (default: latest)")
     p.add_argument("--delay", type=float, default=0.05, help="Seconds between block fetches (default 0.05)")
     args = p.parse_args()

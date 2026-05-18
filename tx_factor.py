@@ -10,6 +10,7 @@ Usage:
 """
 
 import argparse
+import os
 import sys
 
 from web3 import Web3
@@ -17,8 +18,8 @@ from web3 import Web3
 
 def main():
     p = argparse.ArgumentParser(description="Compute baseFee multiplier from an EIP-1559 tx")
-    p.add_argument("--rpc", default="http://192.168.1.42:8555/", help="Ethereum JSON-RPC endpoint URL")
-    p.add_argument("--tx",  default="0x04792aa6ae68e4ff5e66445718ec5fdce76e218621d5c87b9c4a756afe3edba5", help="Transaction hash (0x...)")
+    p.add_argument("--rpc", default=os.environ.get("ETH_RPC_URL"), required=not os.environ.get("ETH_RPC_URL"), help="Ethereum JSON-RPC endpoint URL")
+    p.add_argument("--tx",  default="0xc31c72de822a397513ac98d9e47b75e8c4065331ce9c01091744be50884518b3", help="Transaction hash (0x...)")
     args = p.parse_args()
 
     w3 = Web3(Web3.HTTPProvider(args.rpc))

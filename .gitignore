@@ -28,5 +28,6 @@ Thumbs.db
 
 # Env files
 .env
+.envrc
 .env.local
 *.env

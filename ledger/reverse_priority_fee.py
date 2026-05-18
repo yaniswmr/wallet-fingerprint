@@ -5,11 +5,12 @@ from eth_feeHistory. One RPC call per n_blocks with all percentiles,
 then all (p_low, p_medium, p_high) combinations are tested in memory.
 """
 
+import os
 import requests
 from itertools import combinations
 from web3 import Web3
 
-RPC_URL = "http://192.168.1.42:8555/"
+RPC_URL = os.environ["ETH_RPC_URL"]
 LEDGER_URL = "https://explorers.api.live.ledger.com/blockchain/v4/eth/gastracker/barometer?display=eip1559"
 
 w3 = Web3(Web3.HTTPProvider(RPC_URL))
