@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gas Fingerprint Explorer</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">⬡</span>
+        <span class="logo-text">Gas<span class="accent">Fingerprint</span></span>
+      </div>
+      <div id="stats-bar" class="stats-bar"></div>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- Filters -->
+    <div class="toolbar">
+      <div class="search-wrap">
+        <input id="search" type="text" placeholder="Search hash or address…" autocomplete="off" />
+      </div>
+
+      <div class="filter-group">
+        <label>Wallet</label>
+        <select id="filter-wallet">
+          <option value="">All</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Tx Type</label>
+        <select id="filter-txtype">
+          <option value="">All</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Per page</label>
+        <select id="per-page">
+          <option value="25">25</option>
+          <option value="50" selected>50</option>
+          <option value="100">100</option>
+          <option value="200">200</option>
+        </select>
+      </div>
+
+      <button id="btn-reset" class="btn-ghost">Reset</button>
+    </div>
+
+    <!-- Result info -->
+    <div class="result-info">
+      <span id="result-count"></span>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrap">
+      <table id="tx-table">
+        <thead>
+          <tr>
+            <th data-col="hash">Tx Hash</th>
+            <th data-col="block" class="sortable active desc">Block</th>
+            <th data-col="wallet">Wallet</th>
+            <th data-col="tx_type" class="sortable">Type</th>
+            <th data-col="from_addr">From</th>
+            <th data-col="max_fee_gwei" class="sortable">Max Fee (Gwei)</th>
+            <th data-col="max_priority_gwei" class="sortable">Priority (Gwei)</th>
+            <th data-col="base_fee_gwei" class="sortable">Base Fee (Gwei)</th>
+            <th data-col="fee_factor" class="sortable">Fee Factor</th>
+            <th data-col="fee_factor_parent" class="sortable">Fee Factor Parent</th>
+            <th data-col="gas_limit" class="sortable">Gas Limit</th>
+            <th data-col="estimated_gas" class="sortable">Est. Gas</th>
+            <th data-col="gas_limit_factor" class="sortable">Gas Limit Factor</th>
+          </tr>
+        </thead>
+        <tbody id="tx-body">
+          <tr><td colspan="13" class="loading">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" id="pagination"></div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
