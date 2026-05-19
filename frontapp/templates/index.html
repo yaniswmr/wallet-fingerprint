@@ -13,6 +13,13 @@
         <span class="logo-icon">⬡</span>
         <span class="logo-text">Gas<span class="accent">Fingerprint</span></span>
       </div>
+
+      <!-- DB tabs -->
+      <div class="db-tabs">
+        <button class="db-tab active" data-db="gas">Gas DB</button>
+        <button class="db-tab" data-db="ledger">Ledger DB</button>
+      </div>
+
       <div id="stats-bar" class="stats-bar"></div>
     </div>
   </div>
@@ -24,9 +31,18 @@
         <input id="search" type="text" placeholder="Search hash or address…" autocomplete="off" />
       </div>
 
-      <div class="filter-group">
+      <!-- Gas filter -->
+      <div class="filter-group" id="group-wallet">
         <label>Wallet</label>
         <select id="filter-wallet">
+          <option value="">All</option>
+        </select>
+      </div>
+
+      <!-- Ledger filter -->
+      <div class="filter-group hidden" id="group-tier">
+        <label>Tier</label>
+        <select id="filter-tier">
           <option value="">All</option>
         </select>
       </div>
@@ -58,7 +74,8 @@
 
     <!-- Table -->
     <div class="table-wrap">
-      <table id="tx-table">
+      <!-- Gas table -->
+      <table id="gas-table">
         <thead>
           <tr>
             <th data-col="hash">Tx Hash</th>
@@ -76,8 +93,33 @@
             <th data-col="gas_limit_factor" class="sortable">Gas Limit Factor</th>
           </tr>
         </thead>
-        <tbody id="tx-body">
+        <tbody id="gas-body">
           <tr><td colspan="13" class="loading">Loading…</td></tr>
+        </tbody>
+      </table>
+
+      <!-- Ledger table -->
+      <table id="ledger-table" class="hidden">
+        <thead>
+          <tr>
+            <th data-col="hash">Tx Hash</th>
+            <th data-col="block" class="sortable active desc">Block</th>
+            <th data-col="tier">Tier</th>
+            <th data-col="tx_type" class="sortable">Type</th>
+            <th data-col="from_addr">From</th>
+            <th data-col="max_fee_gwei" class="sortable">Max Fee (Gwei)</th>
+            <th data-col="max_priority_gwei" class="sortable">Priority (Gwei)</th>
+            <th data-col="base_fee_gwei" class="sortable">Base Fee (Gwei)</th>
+            <th data-col="fee_factor" class="sortable">Fee Factor</th>
+            <th data-col="ledger_slow" class="sortable">Ledger Slow</th>
+            <th data-col="ledger_medium" class="sortable">Ledger Medium</th>
+            <th data-col="ledger_fast" class="sortable">Ledger Fast</th>
+            <th data-col="gas_limit" class="sortable">Gas Limit</th>
+            <th data-col="estimated_gas" class="sortable">Est. Gas</th>
+            <th data-col="gas_limit_factor" class="sortable">Gas Limit Factor</th>
+          </tr>
+        </thead>
+        <tbody id="ledger-body">
         </tbody>
       </table>
     </div>

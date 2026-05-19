@@ -54,6 +54,33 @@ body {
 .logo-icon { color: var(--accent); font-size: 20px; }
 .accent { color: var(--accent); }
 
+/* ── DB TABS ── */
+.db-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 3px;
+}
+.db-tab {
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 14px;
+  transition: background .15s, color .15s;
+  white-space: nowrap;
+}
+.db-tab:hover { color: var(--text); }
+.db-tab.active { background: var(--accent); color: #000; }
+
+/* ── HIDDEN ── */
+.hidden { display: none !important; }
+
 .stats-bar {
   display: flex;
   gap: 24px;
@@ -251,6 +278,9 @@ tr:hover .copy-btn { opacity: 1; }
 .badge-okx       { background: #ffffff11; color: #e2e8f0;  border: 1px solid #ffffff22; }
 .badge-trust     { background: #3b82f622; color: #60a5fa;  border: 1px solid #3b82f644; }
 .badge-default   { background: #64748b22; color: #94a3b8;  border: 1px solid #64748b44; }
+.badge-slow      { background: #f8717122; color: #f87171;  border: 1px solid #f8717144; }
+.badge-medium    { background: #fbbf2422; color: #fbbf24;  border: 1px solid #fbbf2444; }
+.badge-fast      { background: #00d4aa22; color: #00d4aa;  border: 1px solid #00d4aa44; }
 
 /* Tx type pill */
 .txtype {
