@@ -179,9 +179,12 @@ async function loadPage() {
   document.getElementById("result-count").innerHTML =
     `Showing <span>${from}–${to}</span> of <span>${data.total.toLocaleString()}</span> transactions`;
 
+  const offset = (state.page - 1) * state.per_page;
+
   if (state.db === "gas") {
-    tbody.innerHTML = data.rows.map(r => `
+    tbody.innerHTML = data.rows.map((r, i) => `
       <tr>
+        <td class="row-num">${offset + i + 1}</td>
         <td>${hashCell(r.hash)}</td>
         <td>${r.block ? r.block.toLocaleString() : "—"}</td>
         <td>${walletBadge(r.wallet)}</td>
@@ -198,8 +201,9 @@ async function loadPage() {
       </tr>
     `).join("");
   } else {
-    tbody.innerHTML = data.rows.map(r => `
+    tbody.innerHTML = data.rows.map((r, i) => `
       <tr>
+        <td class="row-num">${offset + i + 1}</td>
         <td>${hashCell(r.hash)}</td>
         <td>${r.block ? r.block.toLocaleString() : "—"}</td>
         <td>${tierBadge(r.tier)}</td>

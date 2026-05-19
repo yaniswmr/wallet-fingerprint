@@ -296,6 +296,11 @@ tr:hover .copy-btn { opacity: 1; }
 .txtype-2 { background: #00d4aa22; color: #00d4aa; border: 1px solid #00d4aa44; }
 .txtype-4 { background: #a78bfa22; color: #a78bfa; border: 1px solid #a78bfa44; }
 
+/* Row number */
+.col-num { width: 42px; text-align: center; color: var(--text-muted); }
+.row-num { text-align: center; color: var(--border); font-size: 11px; user-select: none; }
+tr:hover .row-num { color: var(--text-muted); }
+
 /* Numeric cells */
 .num { text-align: center; }
 .num-hi { color: var(--danger); }
