@@ -29,6 +29,7 @@ KNOWN_DELEGATORS: dict[str, str] = {
     "0x63c0c19a282a1b52b07dd5a65b58948a07dae32b": "MetaMask",
     "0xd2e28229f6f2c235e57de2ebc727025a1d0530fb": "Trust Wallet",
     "0x80296ff8d1ed46f8e3c7992664d13b833504c2bb": "OKX Wallet",
+    "0x5A7FC11397E9a8AD41BF10bf13F22B0a63f96f6d": "Ambire",
 }
 
 EIP7702_PREFIX = bytes.fromhex("ef0100")
@@ -45,6 +46,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     block               INTEGER NOT NULL,
     from_addr           TEXT,
     wallet              TEXT,
+    tx_type             INTEGER,
     max_fee_gwei        REAL,
     max_priority_gwei   REAL,
     base_fee_gwei       REAL,
@@ -58,11 +60,11 @@ CREATE TABLE IF NOT EXISTS transactions (
 
 INSERT_TX = """
 INSERT OR IGNORE INTO transactions
-    (hash, block, from_addr, wallet,
+    (hash, block, from_addr, wallet, tx_type,
      max_fee_gwei, max_priority_gwei, base_fee_gwei,
      fee_factor, fee_factor_parent,
      gas_limit, estimated_gas, gas_limit_factor)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 """
 
 
@@ -175,6 +177,7 @@ def scan(
                 block_num,
                 tx["from"],
                 wallet_name,
+                tx.get("type"),
                 round(max_fee_gwei,      6) if max_fee_gwei      is not None else None,
                 round(max_priority_gwei, 6) if max_priority_gwei is not None else None,
                 round(base_fee_gwei,     6) if base_fee_gwei     is not None else None,

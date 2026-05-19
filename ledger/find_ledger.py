@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     block             INTEGER NOT NULL,
     from_addr         TEXT,
     tier              TEXT,
+    tx_type           INTEGER,
     max_fee_gwei      REAL,
     max_priority_gwei REAL,
     base_fee_gwei     REAL,
@@ -73,11 +74,11 @@ CREATE TABLE IF NOT EXISTS transactions (
 
 INSERT_TX = """
 INSERT OR IGNORE INTO transactions
-    (hash, block, from_addr, tier,
+    (hash, block, from_addr, tier, tx_type,
      max_fee_gwei, max_priority_gwei, base_fee_gwei, fee_factor,
      ledger_slow, ledger_medium, ledger_fast,
      gas_limit, estimated_gas, gas_limit_factor)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 """
 
 
@@ -178,6 +179,7 @@ def analyze_block(block, w3: Web3) -> list[dict]:
             "hash":             tx["hash"].hex(),
             "from":             tx["from"],
             "to":               tx.get("to") or "contract-creation",
+            "tx_type":          tx.get("type"),
             "maxFee":           round(max_fee_gwei, 6),
             "maxPriority":      round(max_priority_gwei, 6),
             "baseFee":          round(base_fee_gwei, 6),
@@ -288,7 +290,7 @@ def main() -> None:
         confirmed = [m for m in matches if m["tier"] is not None]
         if confirmed:
             rows = [(
-                m["hash"], current, m["from"], m["tier"],
+                m["hash"], current, m["from"], m["tier"], m["tx_type"],
                 m["maxFee"], m["maxPriority"], m["baseFee"], m["fee_factor"],
                 m["ledger_slow"], m["ledger_medium"], m["ledger_fast"],
                 m["gas_limit"], m["estimated_gas"], m["gas_limit_factor"],
