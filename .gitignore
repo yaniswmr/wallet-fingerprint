@@ -31,3 +31,5 @@ Thumbs.db
 .envrc
 .env.local
 *.env
+
+node_modules

@@ -29,7 +29,7 @@ KNOWN_DELEGATORS: dict[str, str] = {
     "0x63c0c19a282a1b52b07dd5a65b58948a07dae32b": "MetaMask",
     "0xd2e28229f6f2c235e57de2ebc727025a1d0530fb": "Trust Wallet",
     "0x80296ff8d1ed46f8e3c7992664d13b833504c2bb": "OKX Wallet",
-    "0x5A7FC11397E9a8AD41BF10bf13F22B0a63f96f6d": "Ambire",
+    "0x5a7fc11397e9a8ad41bf10bf13f22b0a63f96f6d": "Ambire",
 }
 
 EIP7702_PREFIX = bytes.fromhex("ef0100")
