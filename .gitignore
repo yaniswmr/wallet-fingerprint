@@ -33,3 +33,5 @@ Thumbs.db
 *.env
 
 node_modules
+
+tmp

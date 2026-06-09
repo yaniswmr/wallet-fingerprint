@@ -1,0 +1,11 @@
+{
+  "name": "ambire-gasfees",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ethers": "^6.0.0"
+  }
+}

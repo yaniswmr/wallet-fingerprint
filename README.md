@@ -6,6 +6,7 @@ Ce projet permet d'afficher et de filtrer des informations sur des transactions 
 - Ledger
 - Trust Wallet
 - OKX Wallet
+- Ambire Wallet
 
 La page web permet de parcourir les transactions, de filtrer par wallet ou par tier Ledger, de filtrer par type de transaction, de rechercher par hash ou adresse, et de comparer plusieurs champs lies au gas : `max_fee_gwei`, `max_priority_gwei`, `base_fee_gwei`, `fee_factor`, `gas_limit`, `estimated_gas` et `gas_limit_factor`.
 
