@@ -12,4 +12,5 @@ block = w3.eth.get_block("latest")
 base_fee_gwei = block["baseFeePerGas"] / 1e9
 
 print(f"Block number : {block['number']}")
-print(f"Base fee     : {base_fee_gwei:.8f} Gwei")
+print(f"Base fee     : {base_fee_gwei:.9f} Gwei")
+print(f"Base fee     : {base_fee_gwei*1000000000} wei")

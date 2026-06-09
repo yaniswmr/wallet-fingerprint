@@ -25,8 +25,8 @@ const RELAYER_SPEED_RATIOS = {
 }
 const RATIO_DENOM = 1_000_000n
 
-// Nombre de blocs à moyenner pour estimer "slow" (baseFee)
-const BASEFEE_HISTORY_BLOCKS = 10
+// Nombre de blocs pour la médiane du baseFee (reverse-engineered : 3 or 5 optimal)
+const BASEFEE_HISTORY_BLOCKS = 5
 
 // Speeds pour l'algo nouveau (extension v2)
 const SPEEDS = [
@@ -151,8 +151,12 @@ export async function getRelayerAlgoRecommendations(provider, blockTag = 'latest
   if (!block.baseFeePerGas || block.baseFeePerGas === 0n)
     throw new Error('Non-EIP-1559 block')
 
-  // ── slow (baseFee) : moyenne des N derniers blocs via eth_feeHistory ──────────
-  // Plus proche du relayer qu'un seul bloc car le relayer lisse probablement les valeurs
+  // ── slow (baseFee) : médiane des N derniers blocs × 1.15 ─────────────────────
+  // Reverse-engineered depuis 154 computations réelles du relayer (MAPE ≈ 2%) :
+  //   base_slow ≈ median(last 5 baseFees) × 1.15
+  // Le multiplicateur ×1.15 est robuste sur toutes les fenêtres (5–300 blocs).
+  // L'erreur résiduelle (<10%) vient probablement d'un état interne côté serveur
+  // (max glissant ou EMA avec historique plus long que 5 blocs).
   const feeHistory = await provider.send('eth_feeHistory', [
     '0x' + BASEFEE_HISTORY_BLOCKS.toString(16),
     typeof blockTag === 'number' ? '0x' + blockTag.toString(16) : blockTag,
@@ -160,9 +164,12 @@ export async function getRelayerAlgoRecommendations(provider, blockTag = 'latest
   ])
 
   const baseFees = feeHistory.baseFeePerGas.map(x => BigInt(x))
-  // Inclure le prochain baseFee prédit (dernier élément de l'array)
-  const allBaseFees = baseFees
-  const slowBaseFee = allBaseFees.reduce((a, b) => a + b, 0n) / BigInt(allBaseFees.length)
+  // Médiane des baseFees historiques (sans le next-predicted qui est baseFees[-1])
+  const histFees = baseFees.slice(0, -1)
+  const sortedFees = [...histFees].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))
+  const medianFee = sortedFees[Math.floor(sortedFees.length / 2)]
+  // ×1.15 : marge de sécurité observée empiriquement
+  const slowBaseFee = (medianFee * 115n) / 100n
 
   // ── tip_unit : médiane IQR des tips du bloc ────────────────────────────────────
   // Les tips bruts du bloc
