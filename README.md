@@ -10,6 +10,10 @@ Ce projet permet d'afficher et de filtrer des informations sur des transactions 
 
 La page web permet de parcourir les transactions, de filtrer par wallet ou par tier Ledger, de filtrer par type de transaction, de rechercher par hash ou adresse, et de comparer plusieurs champs lies au gas : `max_fee_gwei`, `max_priority_gwei`, `base_fee_gwei`, `fee_factor`, `gas_limit`, `estimated_gas` et `gas_limit_factor`.
 
+## Remarques
+
+Les urls utilisé pour la récupérations des données des serveurs de gas, dans le cas de metamask et Rabby Wallet, sont officielement confirmés, c'est ceuux utilisés dirctement dans l'extention, j'ai pu vérifié ça en live
+
 ## Donnees
 
 Les donnees affichees ne doivent pas etre considerees comme certaines. Elles servent a l'analyse et a l'exploration de patterns de gas, mais elles peuvent contenir des erreurs, des approximations ou des transactions mal classees.
