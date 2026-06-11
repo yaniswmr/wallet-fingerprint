@@ -16,8 +16,9 @@
 
       <!-- DB tabs -->
       <div class="db-tabs">
-        <button class="db-tab active" data-db="gas">Gas DB</button>
-        <button class="db-tab" data-db="ledger">Ledger DB</button>
+        <button class="db-tab active" data-db="gas">MetaMask / OKX / TrustWallet</button>
+        <button class="db-tab" data-db="ledger">Ledger</button>
+        <button class="db-tab" data-db="mew">MEW</button>
       </div>
 
       <div id="stats-bar" class="stats-bar"></div>
@@ -39,7 +40,7 @@
         </select>
       </div>
 
-      <!-- Ledger filter -->
+      <!-- Ledger / MEW filter (tier-based) -->
       <div class="filter-group hidden" id="group-tier">
         <label>Tier</label>
         <select id="filter-tier">
@@ -122,6 +123,30 @@
           </tr>
         </thead>
         <tbody id="ledger-body">
+        </tbody>
+      </table>
+
+      <!-- MEW table -->
+      <table id="mew-table" class="hidden">
+        <thead>
+          <tr>
+            <th class="col-num">#</th>
+            <th data-col="hash">Tx Hash</th>
+            <th data-col="block" class="sortable active desc">Block</th>
+            <th data-col="tier">Tier</th>
+            <th data-col="tx_type" class="sortable">Type</th>
+            <th data-col="from_addr">From</th>
+            <th data-col="max_fee_gwei" class="sortable">Max Fee (Gwei)</th>
+            <th data-col="max_priority_gwei" class="sortable">Priority (Gwei)</th>
+            <th data-col="base_fee_gwei" class="sortable">Base Fee (Gwei)</th>
+            <th data-col="fee_factor" class="sortable">Fee Factor</th>
+            <th data-col="raw_priority_gwei" class="sortable">Raw Priority (Gwei)</th>
+            <th data-col="gas_limit" class="sortable">Gas Limit</th>
+            <th data-col="estimated_gas" class="sortable">Est. Gas</th>
+            <th data-col="gas_limit_factor" class="sortable">Gas Limit Factor</th>
+          </tr>
+        </thead>
+        <tbody id="mew-body">
         </tbody>
       </table>
     </div>

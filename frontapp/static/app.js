@@ -1,5 +1,5 @@
 const state = {
-  db: "gas",           // "gas" | "ledger"
+  db: "gas",           // "gas" | "ledger" | "mew"
   page: 1,
   per_page: 50,
   wallet: "",          // gas only
@@ -20,10 +20,19 @@ const WALLET_BADGE = {
 };
 
 const TIER_BADGE = {
-  "slow":   "badge-slow",
-  "medium": "badge-medium",
-  "fast":   "badge-fast",
+  "slow":    "badge-slow",
+  "medium":  "badge-medium",
+  "fast":    "badge-fast",
+  "economy": "badge-slow",
+  "regular": "badge-medium",
 };
+
+// tier-based DBs (share the Tier filter + tier badge styling)
+const TIER_DBS = ["ledger", "mew"];
+const isTierDb = db => TIER_DBS.includes(db);
+const COL_COUNT = { gas: 13, ledger: 15, mew: 14 };
+const tableIdFor = db => `${db}-table`;
+const bodyIdFor  = db => `${db}-body`;
 
 function walletBadge(w) {
   const cls = WALLET_BADGE[w] || "badge-default";
@@ -89,7 +98,7 @@ async function loadStats() {
       walletSel.appendChild(opt);
     });
   } else {
-    const res  = await fetch("/api/ledger/stats");
+    const res  = await fetch(`/api/${state.db}/stats`);
     const data = await res.json();
 
     renderStatsBar(data.total, data.tiers.map(t => `${t.tier}: <b>${t.cnt.toLocaleString()}</b>`).join(" &nbsp;·&nbsp; "));
@@ -125,7 +134,7 @@ async function refreshTxTypeOptions() {
   if (state.db === "gas") {
     url = "/api/stats" + (state.wallet ? `?wallet=${encodeURIComponent(state.wallet)}` : "");
   } else {
-    url = "/api/ledger/stats" + (state.tier ? `?tier=${encodeURIComponent(state.tier)}` : "");
+    url = `/api/${state.db}/stats` + (state.tier ? `?tier=${encodeURIComponent(state.tier)}` : "");
   }
 
   const res  = await fetch(url);
@@ -157,9 +166,8 @@ async function loadPage() {
   if (state.tx_type !== "") params.set("tx_type", state.tx_type);
   if (state.search)         params.set("search",   state.search);
 
-  const colCount = state.db === "gas" ? 13 : 15;
-  const bodyId   = state.db === "gas" ? "gas-body" : "ledger-body";
-  const tbody    = document.getElementById(bodyId);
+  const colCount = COL_COUNT[state.db];
+  const tbody    = document.getElementById(bodyIdFor(state.db));
   tbody.innerHTML = `<tr><td colspan="${colCount}" class="loading">Loading…</td></tr>`;
 
   let endpoint;
@@ -168,7 +176,7 @@ async function loadPage() {
     endpoint = "/api/transactions";
   } else {
     if (state.tier) params.set("tier", state.tier);
-    endpoint = "/api/ledger/transactions";
+    endpoint = `/api/${state.db}/transactions`;
   }
 
   const res  = await fetch(`${endpoint}?${params}`);
@@ -200,7 +208,7 @@ async function loadPage() {
         <td class="num">${colorFactor(r.gas_limit_factor)}</td>
       </tr>
     `).join("");
-  } else {
+  } else if (state.db === "ledger") {
     tbody.innerHTML = data.rows.map((r, i) => `
       <tr>
         <td class="row-num">${offset + i + 1}</td>
@@ -216,6 +224,25 @@ async function loadPage() {
         <td class="num">${fmt(r.ledger_slow)}</td>
         <td class="num">${fmt(r.ledger_medium)}</td>
         <td class="num">${fmt(r.ledger_fast)}</td>
+        <td class="num">${fmtInt(r.gas_limit)}</td>
+        <td class="num">${fmtInt(r.estimated_gas)}</td>
+        <td class="num">${colorFactor(r.gas_limit_factor)}</td>
+      </tr>
+    `).join("");
+  } else {
+    tbody.innerHTML = data.rows.map((r, i) => `
+      <tr>
+        <td class="row-num">${offset + i + 1}</td>
+        <td>${hashCell(r.hash)}</td>
+        <td>${r.block ? r.block.toLocaleString() : "—"}</td>
+        <td>${tierBadge(r.tier)}</td>
+        <td>${txTypePill(r.tx_type)}</td>
+        <td><span class="addr" title="${r.from_addr || ""}">${shortAddr(r.from_addr)}</span></td>
+        <td class="num">${fmt(r.max_fee_gwei)}</td>
+        <td class="num">${fmt(r.max_priority_gwei)}</td>
+        <td class="num">${fmt(r.base_fee_gwei)}</td>
+        <td class="num">${colorFactor(r.fee_factor)}</td>
+        <td class="num">${fmt(r.raw_priority_gwei)}</td>
         <td class="num">${fmtInt(r.gas_limit)}</td>
         <td class="num">${fmtInt(r.estimated_gas)}</td>
         <td class="num">${colorFactor(r.gas_limit_factor)}</td>
@@ -288,14 +315,15 @@ function switchDb(db) {
 
   // swap visible filter
   document.getElementById("group-wallet").classList.toggle("hidden", db !== "gas");
-  document.getElementById("group-tier").classList.toggle("hidden",   db !== "ledger");
+  document.getElementById("group-tier").classList.toggle("hidden",   !isTierDb(db));
 
-  // swap visible table
-  document.getElementById("gas-table").classList.toggle("hidden",    db !== "gas");
-  document.getElementById("ledger-table").classList.toggle("hidden", db !== "ledger");
+  // swap visible table — hide all, show current
+  ["gas", "ledger", "mew"].forEach(d => {
+    document.getElementById(tableIdFor(d)).classList.toggle("hidden", d !== db);
+  });
 
   // reset sort headers on active table
-  const activeTable = db === "gas" ? "gas-table" : "ledger-table";
+  const activeTable = tableIdFor(db);
   document.querySelectorAll(`#${activeTable} th`).forEach(t => t.classList.remove("active", "asc", "desc"));
   document.querySelector(`#${activeTable} th[data-col='block']`).classList.add("active", "desc");
 
@@ -322,7 +350,7 @@ document.querySelectorAll("th.sortable").forEach(th => {
       state.sort_by  = col;
       state.sort_dir = "desc";
     }
-    const tableId = state.db === "gas" ? "gas-table" : "ledger-table";
+    const tableId = tableIdFor(state.db);
     document.querySelectorAll(`#${tableId} th`).forEach(t => t.classList.remove("active", "asc", "desc"));
     th.classList.add("active", state.sort_dir);
     state.page = 1;
@@ -378,7 +406,7 @@ document.getElementById("btn-reset").addEventListener("click", async () => {
   document.getElementById("filter-wallet").value = "";
   document.getElementById("filter-tier").value   = "";
   document.getElementById("search").value        = "";
-  const tableId = state.db === "gas" ? "gas-table" : "ledger-table";
+  const tableId = tableIdFor(state.db);
   document.querySelectorAll(`#${tableId} th`).forEach(t => t.classList.remove("active", "asc", "desc"));
   document.querySelector(`#${tableId} th[data-col='block']`).classList.add("active", "desc");
   await refreshTxTypeOptions();
