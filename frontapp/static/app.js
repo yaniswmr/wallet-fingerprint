@@ -1,4 +1,5 @@
 const state = {
+  mode: "tx",          // "tx" | "fees"
   db: "gas",           // "gas" | "ledger" | "mew"
   page: 1,
   per_page: 50,
@@ -9,6 +10,17 @@ const state = {
   sort_dir: "desc",
   search: "",
   debounce: null,
+};
+
+// Server gas-fee explorer state (independent from the tx explorer)
+const feesState = {
+  wallet: "metamask",  // "metamask" | "okx" | "ambire" | "rabby"
+  page: 1,
+  per_page: 50,
+  sort_by: "ts",
+  sort_dir: "desc",
+  search: "",
+  columns: [],
 };
 
 const ETHERSCAN = "https://etherscan.io/tx/0x";
@@ -262,6 +274,139 @@ function hashCell(hash) {
   `;
 }
 
+// ── Server gas fees (suggestions collected from wallet APIs) ───────────────────
+
+function fmtFeeCell(value, type) {
+  if (value === null || value === undefined || value === "")
+    return `<span class="null-val">—</span>`;
+  switch (type) {
+    case "datetime": {
+      const d = new Date(parseInt(value) * 1000);
+      return `<span title="${value}">${d.toLocaleString()}</span>`;
+    }
+    case "int":
+      return parseInt(value).toLocaleString();
+    case "gwei": {                                  // already gwei
+      const n = parseFloat(value);
+      return isNaN(n) ? `<span class="null-val">—</span>` : n.toFixed(4);
+    }
+    case "wei_gwei": {                              // wei → gwei
+      const n = parseFloat(value) / 1e9;
+      return isNaN(n) ? `<span class="null-val">—</span>` : n.toFixed(4);
+    }
+    case "mult":
+      return colorFactor(value);
+    case "ratio": {
+      const n = parseFloat(value);
+      return isNaN(n) ? `<span class="null-val">—</span>` : n.toFixed(3);
+    }
+    case "flag":
+      return parseInt(value)
+        ? `<span class="badge badge-fast">yes</span>`
+        : `<span class="badge badge-slow">no</span>`;
+    case "text": {
+      const t = String(value);
+      const cls = t === "up" ? "num-hi" : t === "down" ? "num-lo" : "";
+      return `<span class="${cls}">${t}</span>`;
+    }
+    default:
+      return value;
+  }
+}
+
+async function loadFeesStats() {
+  const res  = await fetch(`/api/fees/${feesState.wallet}/stats`);
+  const data = await res.json();
+  const range = (data.block_min && data.block_max)
+    ? `${data.block_min.toLocaleString()} → ${data.block_max.toLocaleString()}`
+    : "—";
+  document.getElementById("stats-bar").innerHTML = `
+    <div class="stat-item">
+      <span class="stat-label">Samples</span>
+      <span class="stat-value">${data.total.toLocaleString()}</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">Block range</span>
+      <span class="stat-value" style="font-size:11px;color:var(--text-dim)">${range}</span>
+    </div>
+  `;
+}
+
+async function loadFees() {
+  const params = new URLSearchParams({
+    page: feesState.page,
+    per_page: feesState.per_page,
+    sort_by: feesState.sort_by,
+    sort_dir: feesState.sort_dir,
+  });
+  if (feesState.search) params.set("search", feesState.search);
+
+  const head = document.getElementById("fees-head");
+  const body = document.getElementById("fees-body");
+  body.innerHTML = `<tr><td colspan="${(feesState.columns.length || 12) + 1}" class="loading">Loading…</td></tr>`;
+
+  const res  = await fetch(`/api/fees/${feesState.wallet}?${params}`);
+  const data = await res.json();
+  feesState.columns = data.columns;
+
+  head.innerHTML = `<th class="col-num">#</th>` + data.columns.map(c =>
+    `<th class="sortable fees-sort ${feesState.sort_by === c.key ? "active " + feesState.sort_dir : ""}" data-col="${c.key}">${c.label}</th>`
+  ).join("");
+
+  const offset = (data.page - 1) * feesState.per_page;
+  body.innerHTML = data.rows.length
+    ? data.rows.map((r, i) => `
+        <tr>
+          <td class="row-num">${offset + i + 1}</td>
+          ${data.columns.map(c => `<td class="num">${fmtFeeCell(r[c.key], c.type)}</td>`).join("")}
+        </tr>`).join("")
+    : `<tr><td colspan="${data.columns.length + 1}" class="loading">No data</td></tr>`;
+
+  const from = (offset + 1).toLocaleString();
+  const to   = Math.min(data.page * feesState.per_page, data.total).toLocaleString();
+  document.getElementById("result-count").innerHTML =
+    `Showing <span>${from}–${to}</span> of <span>${data.total.toLocaleString()}</span> samples`;
+
+  renderPagination(data.page, data.pages);
+}
+
+// ── Mode switch (Transactions ⇄ Server Gas Fees) ───────────────────────────────
+
+function switchMode(mode) {
+  state.mode = mode;
+  const feesMode = mode === "fees";
+
+  document.querySelectorAll(".mode-tab").forEach(b => b.classList.toggle("active", b.dataset.mode === mode));
+  document.getElementById("tx-tabs").classList.toggle("hidden", feesMode);
+  document.getElementById("fees-tabs").classList.toggle("hidden", !feesMode);
+
+  // tx-only filters
+  document.getElementById("group-wallet").classList.toggle("hidden", feesMode || state.db !== "gas");
+  document.getElementById("group-tier").classList.toggle("hidden", feesMode || !isTierDb(state.db));
+  document.getElementById("group-txtype").classList.toggle("hidden", feesMode);
+
+  // tables
+  ["gas", "ledger", "mew"].forEach(d =>
+    document.getElementById(tableIdFor(d)).classList.toggle("hidden", feesMode || d !== state.db));
+  document.getElementById("fees-table").classList.toggle("hidden", !feesMode);
+
+  // shared controls
+  const searchEl = document.getElementById("search");
+  searchEl.value = "";
+  searchEl.placeholder = feesMode ? "Search block number…" : "Search hash or address…";
+  document.getElementById("per-page").value = "50";
+
+  if (feesMode) {
+    feesState.page = 1; feesState.per_page = 50; feesState.search = "";
+    feesState.sort_by = "ts"; feesState.sort_dir = "desc";
+    document.querySelectorAll(".fees-tab").forEach(b => b.classList.toggle("active", b.dataset.fees === feesState.wallet));
+    loadFeesStats();
+    loadFees();
+  } else {
+    switchDb(state.db);   // fully restore the tx view
+  }
+}
+
 // ── Pagination ────────────────────────────────────────────────────────────────
 
 function renderPagination(current, total) {
@@ -287,8 +432,9 @@ function renderPagination(current, total) {
 
   el.querySelectorAll("button[data-page]").forEach(b => {
     b.addEventListener("click", () => {
-      state.page = parseInt(b.dataset.page);
-      loadPage();
+      const p = parseInt(b.dataset.page);
+      if (state.mode === "fees") { feesState.page = p; loadFees(); }
+      else                       { state.page = p;    loadPage(); }
     });
   });
 }
@@ -321,6 +467,7 @@ function switchDb(db) {
   ["gas", "ledger", "mew"].forEach(d => {
     document.getElementById(tableIdFor(d)).classList.toggle("hidden", d !== db);
   });
+  document.getElementById("fees-table").classList.add("hidden");
 
   // reset sort headers on active table
   const activeTable = tableIdFor(db);
@@ -336,8 +483,43 @@ function switchDb(db) {
 
 // ── Events ────────────────────────────────────────────────────────────────────
 
-document.querySelectorAll(".db-tab").forEach(btn => {
+document.querySelectorAll(".db-tab:not(.fees-tab)").forEach(btn => {
   btn.addEventListener("click", () => switchDb(btn.dataset.db));
+});
+
+// Mode toggle
+document.querySelectorAll(".mode-tab").forEach(btn => {
+  btn.addEventListener("click", () => switchMode(btn.dataset.mode));
+});
+
+// Fees wallet tabs
+document.querySelectorAll(".fees-tab").forEach(btn => {
+  btn.addEventListener("click", () => {
+    feesState.wallet   = btn.dataset.fees;
+    feesState.page     = 1;
+    feesState.search   = "";
+    feesState.sort_by  = "ts";
+    feesState.sort_dir = "desc";
+    document.getElementById("search").value = "";
+    document.querySelectorAll(".fees-tab").forEach(b => b.classList.toggle("active", b === btn));
+    loadFeesStats();
+    loadFees();
+  });
+});
+
+// Fees sort — delegated (headers are rebuilt on every load)
+document.getElementById("fees-head").addEventListener("click", e => {
+  const th = e.target.closest("th.fees-sort");
+  if (!th) return;
+  const col = th.dataset.col;
+  if (feesState.sort_by === col) {
+    feesState.sort_dir = feesState.sort_dir === "desc" ? "asc" : "desc";
+  } else {
+    feesState.sort_by  = col;
+    feesState.sort_dir = "desc";
+  }
+  feesState.page = 1;
+  loadFees();
 });
 
 // Sort — delegate on both tables
@@ -381,21 +563,38 @@ document.getElementById("filter-txtype").addEventListener("change", e => {
 });
 
 document.getElementById("per-page").addEventListener("change", e => {
-  state.per_page = parseInt(e.target.value);
-  state.page     = 1;
-  loadPage();
+  const v = parseInt(e.target.value);
+  if (state.mode === "fees") {
+    feesState.per_page = v; feesState.page = 1; loadFees();
+  } else {
+    state.per_page = v; state.page = 1; loadPage();
+  }
 });
 
 document.getElementById("search").addEventListener("input", e => {
   clearTimeout(state.debounce);
   state.debounce = setTimeout(() => {
-    state.search = e.target.value.trim();
-    state.page   = 1;
-    loadPage();
+    const val = e.target.value.trim();
+    if (state.mode === "fees") {
+      feesState.search = val; feesState.page = 1; loadFees();
+    } else {
+      state.search = val; state.page = 1; loadPage();
+    }
   }, 350);
 });
 
 document.getElementById("btn-reset").addEventListener("click", async () => {
+  if (state.mode === "fees") {
+    feesState.page     = 1;
+    feesState.search   = "";
+    feesState.sort_by  = "ts";
+    feesState.sort_dir = "desc";
+    feesState.per_page = 50;
+    document.getElementById("search").value   = "";
+    document.getElementById("per-page").value = "50";
+    loadFees();
+    return;
+  }
   state.page    = 1;
   state.wallet  = "";
   state.tier    = "";

@@ -14,11 +14,25 @@
         <span class="logo-text">Wallet<span class="accent">Fingerprint</span></span>
       </div>
 
-      <!-- DB tabs -->
-      <div class="db-tabs">
+      <!-- Mode toggle -->
+      <div class="db-tabs mode-tabs">
+        <button class="mode-tab active" data-mode="tx">Transactions</button>
+        <button class="mode-tab" data-mode="fees">Server Gas Fees</button>
+      </div>
+
+      <!-- Transaction DB tabs -->
+      <div class="db-tabs" id="tx-tabs">
         <button class="db-tab active" data-db="gas">MetaMask / OKX / TrustWallet</button>
         <button class="db-tab" data-db="ledger">Ledger</button>
         <button class="db-tab" data-db="mew">MEW</button>
+      </div>
+
+      <!-- Server gas-fee wallet tabs -->
+      <div class="db-tabs hidden" id="fees-tabs">
+        <button class="db-tab fees-tab active" data-fees="metamask">MetaMask</button>
+        <button class="db-tab fees-tab" data-fees="okx">OKX</button>
+        <button class="db-tab fees-tab" data-fees="ambire">Ambire</button>
+        <button class="db-tab fees-tab" data-fees="rabby">Rabby</button>
       </div>
 
       <div id="stats-bar" class="stats-bar"></div>
@@ -48,7 +62,7 @@
         </select>
       </div>
 
-      <div class="filter-group">
+      <div class="filter-group" id="group-txtype">
         <label>Tx Type</label>
         <select id="filter-txtype">
           <option value="">All</option>
@@ -147,6 +161,15 @@
           </tr>
         </thead>
         <tbody id="mew-body">
+        </tbody>
+      </table>
+
+      <!-- Server gas-fees table (dynamic columns) -->
+      <table id="fees-table" class="hidden">
+        <thead>
+          <tr id="fees-head"></tr>
+        </thead>
+        <tbody id="fees-body">
         </tbody>
       </table>
     </div>

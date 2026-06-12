@@ -35,3 +35,5 @@ Thumbs.db
 node_modules
 
 tmp
+
+tmp/analysis/

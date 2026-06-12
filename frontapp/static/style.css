@@ -31,7 +31,7 @@ body {
 .header {
   background: var(--bg2);
   border-bottom: 1px solid var(--border);
-  padding: 0 24px;
+  padding: 0 36px;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -39,19 +39,24 @@ body {
 .header-inner {
   display: flex;
   align-items: center;
-  gap: 32px;
-  height: 52px;
+  gap: 40px;
+  height: 76px;
 }
 .logo {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   font-weight: 700;
-  font-size: 16px;
+  font-size: 19px;
   letter-spacing: -0.3px;
   white-space: nowrap;
 }
-.logo-icon { color: var(--accent); font-size: 20px; }
+.logo-icon { color: var(--accent); font-size: 24px; }
+
+/* logo stays left, tab block centered, stats pushed right.
+   the two auto-margins split the free space evenly, centering the tabs. */
+.mode-tabs  { margin-left: auto; }
+#stats-bar  { margin-left: auto; }
 .accent { color: var(--accent); }
 
 /* ── DB TABS ── */
@@ -77,6 +82,34 @@ body {
 }
 .db-tab:hover { color: var(--text); }
 .db-tab.active { background: var(--accent); color: #000; }
+
+/* ── MODE TABS (Transactions ⇄ Server Gas Fees) ── */
+.mode-tabs {
+  gap: 6px;
+  padding: 4px;
+  background: var(--bg);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+.mode-tab {
+  background: transparent;
+  border: none;
+  border-radius: 5px;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .2px;
+  padding: 9px 22px;
+  transition: background .18s, color .18s, box-shadow .18s, transform .18s;
+  white-space: nowrap;
+}
+.mode-tab:hover { color: var(--text); background: var(--bg3); }
+.mode-tab.active {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #04121b;
+  box-shadow: 0 2px 14px -2px var(--accent), 0 0 0 1px var(--accent) inset;
+}
+.mode-tab.active:hover { color: #04121b; }
 
 /* ── HIDDEN ── */
 .hidden { display: none !important; }

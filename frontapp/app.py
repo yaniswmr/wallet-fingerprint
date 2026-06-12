@@ -236,5 +236,133 @@ def mew_stats():
         "tx_types": [dict(r) for r in tx_types]
     })
 
+# ── SERVER GAS FEES (suggestions collected from wallet APIs) ──────────────────
+
+FEES_DBS = {
+    "metamask": os.path.join(os.path.dirname(__file__), "../metamask/gas_fees_collected.db"),
+    "okx":      os.path.join(os.path.dirname(__file__), "../okx/gas_fees_collected.db"),
+    "ambire":   os.path.join(os.path.dirname(__file__), "../ambire/gas_fees_collected.db"),
+    "rabby":    os.path.join(os.path.dirname(__file__), "../rabby/gas_fees_collected.db"),
+}
+
+# column spec per wallet — (db_column, label, type)
+# types interpreted by the frontend:
+#   datetime | int | gwei | wei_gwei | mult | ratio | flag | text
+FEES_COLUMNS = {
+    "metamask": [
+        ("ts",                       "Time",        "datetime"),
+        ("block_number",             "Block",       "int"),
+        ("estimated_base_fee",       "Base Fee",    "gwei"),
+        ("low_max_priority_fee",     "Low Prio",    "gwei"),
+        ("low_max_fee",              "Low Max",     "gwei"),
+        ("medium_max_priority_fee",  "Med Prio",    "gwei"),
+        ("medium_max_fee",           "Med Max",     "gwei"),
+        ("high_max_priority_fee",    "High Prio",   "gwei"),
+        ("high_max_fee",             "High Max",    "gwei"),
+        ("network_congestion",       "Congestion",  "ratio"),
+        ("priority_fee_trend",       "Prio Trend",  "text"),
+        ("base_fee_trend",           "Base Trend",  "text"),
+    ],
+    "okx": [
+        ("ts",                   "Time",         "datetime"),
+        ("block_number",         "Block",        "int"),
+        ("support_eip1559",      "EIP-1559",     "flag"),
+        ("base_fee",             "Base Fee",     "wei_gwei"),
+        ("suggest_base_fee",     "Suggest Base", "wei_gwei"),
+        ("suggest_base_mult",    "Base ×",       "mult"),
+        ("safe_priority_fee",    "Safe Prio",    "wei_gwei"),
+        ("propose_priority_fee", "Propose Prio", "wei_gwei"),
+        ("fast_priority_fee",    "Fast Prio",    "wei_gwei"),
+        ("max_fee_slow",         "Max Slow",     "wei_gwei"),
+        ("max_fee_average",      "Max Avg",      "wei_gwei"),
+        ("max_fee_fast",         "Max Fast",     "wei_gwei"),
+    ],
+    "ambire": [
+        ("ts",               "Time",      "datetime"),
+        ("block_number",     "Block",     "int"),
+        ("base_slow",        "Base Slow", "wei_gwei"),
+        ("base_medium",      "Base Med",  "wei_gwei"),
+        ("base_fast",        "Base Fast", "wei_gwei"),
+        ("base_ape",         "Base Ape",  "wei_gwei"),
+        ("prio_slow",        "Prio Slow", "wei_gwei"),
+        ("prio_medium",      "Prio Med",  "wei_gwei"),
+        ("prio_fast",        "Prio Fast", "wei_gwei"),
+        ("prio_ape",         "Prio Ape",  "wei_gwei"),
+        ("medium_base_mult", "Med ×",     "mult"),
+        ("fast_base_mult",   "Fast ×",    "mult"),
+        ("ape_base_mult",    "Ape ×",     "mult"),
+    ],
+    "rabby": [
+        ("ts",               "Time",         "datetime"),
+        ("block_number",     "Block",        "int"),
+        ("base_fee",         "Base Fee",     "wei_gwei"),
+        ("slow_price",       "Slow Price",   "wei_gwei"),
+        ("slow_priority",    "Slow Prio",    "wei_gwei"),
+        ("normal_price",     "Normal Price", "wei_gwei"),
+        ("normal_priority",  "Normal Prio",  "wei_gwei"),
+        ("fast_price",       "Fast Price",   "wei_gwei"),
+        ("fast_priority",    "Fast Prio",    "wei_gwei"),
+        ("slow_base_mult",   "Slow ×",       "mult"),
+        ("normal_base_mult", "Normal ×",     "mult"),
+        ("fast_base_mult",   "Fast ×",       "mult"),
+    ],
+}
+
+@app.route("/api/fees/<wallet>")
+def fees_rows(wallet):
+    if wallet not in FEES_DBS:
+        return jsonify({"error": "unknown wallet"}), 404
+
+    cols     = FEES_COLUMNS[wallet]
+    col_keys = [c[0] for c in cols]
+
+    page     = int(request.args.get("page", 1))
+    per_page = int(request.args.get("per_page", 50))
+    sort_by  = request.args.get("sort_by", "ts")
+    sort_dir = request.args.get("sort_dir", "desc")
+    search   = request.args.get("search", "")
+
+    if sort_by not in col_keys: sort_by = "ts"
+    if sort_dir not in ("asc", "desc"): sort_dir = "desc"
+
+    clauses, params = [], []
+    if search:
+        clauses.append("CAST(block_number AS TEXT) LIKE ?")
+        params.append(f"%{search}%")
+
+    where  = build_where(clauses, params)
+    offset = (page - 1) * per_page
+
+    conn  = get_db(FEES_DBS[wallet])
+    total = conn.execute(f"SELECT COUNT(*) FROM gas_fees {where}", params).fetchone()[0]
+    rows  = conn.execute(
+        f"""SELECT {', '.join(col_keys)} FROM gas_fees {where}
+            ORDER BY {sort_by} {sort_dir} LIMIT ? OFFSET ?""",
+        params + [per_page, offset]
+    ).fetchall()
+    conn.close()
+    return jsonify({
+        "columns": [{"key": k, "label": l, "type": t} for (k, l, t) in cols],
+        "total": total, "page": page, "per_page": per_page,
+        "pages": (total + per_page - 1) // per_page,
+        "rows": [dict(r) for r in rows],
+    })
+
+@app.route("/api/fees/<wallet>/stats")
+def fees_stats(wallet):
+    if wallet not in FEES_DBS:
+        return jsonify({"error": "unknown wallet"}), 404
+    conn  = get_db(FEES_DBS[wallet])
+    total = conn.execute("SELECT COUNT(*) FROM gas_fees").fetchone()[0]
+    rng   = conn.execute(
+        "SELECT MIN(block_number), MAX(block_number), MIN(ts), MAX(ts) FROM gas_fees"
+    ).fetchone()
+    conn.close()
+    return jsonify({
+        "total": total,
+        "block_min": rng[0], "block_max": rng[1],
+        "ts_min": rng[2], "ts_max": rng[3],
+    })
+
 if __name__ == "__main__":
     app.run(debug=True, port=5050)
